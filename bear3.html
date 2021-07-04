@@ -1,0 +1,402 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>myfishing game</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id='showxy'></div>
+
+<script type="text/javascript">
+
+var factor = window.innerWidth/1200; 
+var offsetY = (window.innerHeight - 554*factor) /2
+
+//factor =0.8;
+
+
+
+var config = {
+    type: Phaser.CANVAS,
+    width: 1200*factor,
+    height: 554*factor+ 2*offsetY,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+
+
+var stars;
+
+var cursors;
+var frametime, gameOver, onfishing,fishrate,fishtop,fishbot;
+var score, scoreText, scoreX, scoreY;
+var worm, wormText, wormX, wormY;
+
+var mybutton=[];
+
+var textsize;
+var raw=[];
+
+var user=[];
+
+function initial(){
+    
+    frametime=0;
+    gameOver = false;
+    onfishing = false;
+    textsize = Math.floor(20*factor) + 'px';
+
+    score = 0;
+    scoreX = 240 * factor;
+    scoreY = 39 * factor + offsetY;
+
+    worm = 5;
+    wormX = 140 * factor;
+    wormY = 75  * factor + offsetY;
+
+}
+
+
+var game = new Phaser.Game(config);
+
+function preload (){
+    this.load.image('bg5', 'static/bear/bg5.png');
+    this.load.image('food1', 'static/bear/food1.png');
+    this.load.image('food2', 'static/bear/food2.png');  
+    this.load.image('food3', 'static/bear/food3.png');  
+    this.load.image('food4', 'static/bear/food4.png');
+    this.load.image('food5', 'static/bear/food5.png');
+    this.load.image('food6', 'static/bear/food6.png');
+    this.load.image('food7', 'static/bear/food7.png');
+    this.load.image('food8', 'static/bear/food8.png');
+    this.load.image('food9', 'static/bear/food9.png');
+    this.load.image('food10', 'static/bear/food10.png');
+    this.load.image('food11', 'static/bear/food11.png'); 
+    this.load.image('food12', 'static/bear/food12.png');
+    this.load.image('food13', 'static/bear/food13.png');
+    this.load.image('food14', 'static/bear/food14.png');
+    this.load.image('food15', 'static/bear/food15.png');
+    this.load.image('food16', 'static/bear/food16.png'); 
+    this.load.image('food17', 'static/bear/food17.png');
+    this.load.image('customer', 'static/bear/customer.png');
+
+    this.load.spritesheet('cook8', 'static/bear/cook8.png', { frameWidth: 123.3, frameHeight: 66 });
+    this.load.spritesheet('cook9', 'static/bear/cook9.png', { frameWidth: 123.3, frameHeight: 66 });
+  
+    this.load.spritesheet('cat', 'static/fish/cat.png', { frameWidth: 100, frameHeight: 79 });
+
+    this.load.audio('coin','static/fish/coin.mp3');
+    this.load.audio('animaltheme','static/fish/animaltheme.mp3');
+
+}
+
+function create (){
+
+    initial(); // 載入初始設定參數
+    
+    music = this.sound.add('coin',{volume:0.2}) ;
+    music2 = this.sound.add('animaltheme',{loop:true, volume:3});
+    music2.loop = true;
+    music2.stop();
+    music2.play();
+    
+
+    //  加入背景圖面
+    this.add.image(game.config.width/2, game.config.height/2, 'bg5').setScale(factor);
+
+    //  Our player animations, turning, walking left and walking right.
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'cat', frame: 2 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'cook8',
+        frames: this.anims.generateFrameNumbers('cook8', { start: 0, end: 5 }),
+        frameRate: 2,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'cook9',
+        frames: this.anims.generateFrameNumbers('cook9', { start: 0, end: 4 }),
+        frameRate: 2,
+        repeat: -1
+    });
+
+    // //  Input Events
+   
+
+    // 設定所有食物菜單
+    raw[0] = new food("",0,0,0,0,"",0,0,0,false,0,0);
+    raw[1] = new food("food1",0,2,1,8,"",0,1,0,true,1,1);  //先改成9 之後調成8
+    raw[2] = new food("food2",0,0,2,0,"",0,2,0,false,2,2);
+    raw[3] = new food("food3",0,0,3,0,"",0,3,0,false,3,3);
+    raw[4] = new food("food4",0,11,4,12,"",0,0,0,true,4,4);
+    raw[5] = new food("food5",0,11,5,13,"",0,0,0,true,5,5);
+    raw[6] = new food("food6",0,12,6,14,"",13,6,16,true,6,6);
+    raw[7] = new food("food7",0,12,7,15,"",13,7,17,true,7,7);
+    raw[8] = new food("food8",150,0,0,0,"cook8",0,0,0,false,9,8);
+    raw[9] = new food("food9",250,3,2,11,"cook9",0,0,0,true,10,9);
+    raw[10] = new food("food10",0,0,0,0,"",0,0,0,false,10,10);
+    raw[11] = new food("food11",0,11,3,99,"",0,0,0,true,11,11);
+    raw[12] = new food("food12",0,12,3,99,"",0,0,0,true,12,12);
+    raw[13] = new food("food13",0,13,3,99,"",0,0,0,true,13,13);
+    raw[14] = new food("food14",0,14,3,99,"",0,0,0,true,14,14);
+    raw[15] = new food("food15",0,15,3,99,"",0,0,0,true,15,15);
+    raw[16] = new food("food16",0,16,3,99,"",0,0,0,true,16,16);
+    raw[17] = new food("food17",0,17,3,99,"",0,0,0,true,17,17);
+
+
+    // 初始化所有盤子
+    favor1 = this.physics.add.group();
+
+     
+    // 設定按鍵屬性
+    mybutton[0] = new newbutton(favor1.create(922*factor, 510*factor+offsetY, 'food1'),raw[1]);
+    mybutton[1] = new newbutton(favor1.create(443*factor ,501*factor+offsetY, 'food4'),raw[4]);
+    mybutton[2] = new newbutton(favor1.create(537*factor, 500*factor+offsetY, 'food5'),raw[5]);
+    mybutton[3] = new newbutton(favor1.create(653*factor ,494*factor+offsetY, 'food6'),raw[6]);
+    mybutton[4] = new newbutton(favor1.create(753*factor, 497*factor+offsetY, 'food7'),raw[7]);
+
+    mybutton[5] = new newbutton(favor1.create(833*factor, 293*factor+offsetY, 'food2'),raw[2]);
+    mybutton[6] = new newbutton(favor1.create(941*factor, 293*factor+offsetY, 'food2'),raw[2]);
+    mybutton[7] = new newbutton(favor1.create(858*factor, 363*factor+offsetY, 'food2'),raw[2]);
+    mybutton[8] = new newbutton(favor1.create(980*factor, 363*factor+offsetY, 'food2'),raw[2]);  
+
+    mybutton[9]  = new newbutton(favor1.create(525*factor, 313*factor+offsetY, 'food3'),raw[3]);  
+    mybutton[10] = new newbutton(favor1.create(660*factor, 313*factor+offsetY, 'food3'),raw[3]);    
+    mybutton[11] = new newbutton(favor1.create(519*factor, 393*factor+offsetY, 'food3'),raw[3]);  
+    mybutton[12] = new newbutton(favor1.create(667*factor, 393*factor+offsetY, 'food3'),raw[3]);  
+
+    favor1.children.iterate(function (child) {
+        child.setScale(factor);
+    });
+
+    //============================
+    // 設定點擊後的反應=
+    mybutton[0].favor.setInteractive().on('pointerdown', () => {toTable(0,[5,6,7,8]);})
+
+    mybutton[1].favor.setInteractive().on('pointerdown', () => {toTable(1,[9,10,11,12]);})
+    mybutton[2].favor.setInteractive().on('pointerdown', () => {toTable(2,[9,10,11,12]);})
+    mybutton[3].favor.setInteractive().on('pointerdown', () => {toTable(3,[9,10,11,12]);})
+    mybutton[4].favor.setInteractive().on('pointerdown', () => {toTable(4,[9,10,11,12]);})
+
+    mybutton[5].favor.setInteractive().on('pointerdown', () => {toTable(5,[9,10,11,12]);})
+    mybutton[6].favor.setInteractive().on('pointerdown', () => {toTable(6,[9,10,11,12]);})
+    mybutton[7].favor.setInteractive().on('pointerdown', () => {toTable(7,[9,10,11,12]);})
+    mybutton[8].favor.setInteractive().on('pointerdown', () => {toTable(8,[9,10,11,12]);})
+
+    mybutton[9].favor.setInteractive().on('pointerdown', () => {toCustomer(9);})
+    mybutton[10].favor.setInteractive().on('pointerdown', () => {toCustomer(10);})
+    mybutton[11].favor.setInteractive().on('pointerdown', () => {toCustomer(11);})
+    mybutton[12].favor.setInteractive().on('pointerdown', () => {toCustomer(12);})
+    //================================
+
+   
+    // 宣告customer 及 order物件
+    customer = this.physics.add.group()
+    orders = this.physics.add.group();
+
+    // 設定顧客為:user , 包含Customer物件(人物頭像) 及 2個 order物件（餐點）
+    user[0] = new newuser(customer.create(250*factor,170*factor+offsetY,'customer').setScale(factor) ,  orders.create(290*factor,140*factor+offsetY,'food17').setScale(0.5*factor), orders.create(290*factor,210*factor+offsetY,'food17').setScale(0.5*factor)  );
+    user[1] = new newuser(customer.create(490*factor,170*factor+offsetY,'customer').setScale(factor) ,  orders.create(530*factor,140*factor+offsetY,'food17').setScale(0.5*factor), orders.create(530*factor,210*factor+offsetY,'food17').setScale(0.5*factor)  );
+    user[2] = new newuser(customer.create(730*factor,170*factor+offsetY,'customer').setScale(factor) ,  orders.create(770*factor,140*factor+offsetY,'food17').setScale(0.5*factor),  orders.create(770*factor,210*factor+offsetY,'food17').setScale(0.5*factor) );
+    user[3] = new newuser(customer.create(970*factor,170*factor+offsetY,'customer').setScale(factor) ,  orders.create(1010*factor,140*factor+offsetY,'food17').setScale(0.5*factor) ,orders.create(1010*factor,210*factor+offsetY,'food17').setScale(0.5*factor) );
+    
+    for (var i=0;i<user.length;i++){
+        user1 = user[i];
+        user1.customer.disableBody(true,true);
+        user1.order.disableBody(true,true);
+        user1.order2.disableBody(true,true);
+    }
+
+
+    // 秀出分數跟時間
+    scoreText = this.add.text(scoreX, scoreY, '0', { fontSize: textsize, fill: '#000' });
+    wormText = this.add.text(wormX, wormY, worm, { fontSize: textsize, fill: '#000' });
+
+    timetext = this.add.text(game.config.width-300*factor,25*factor,'time:'+frametime,{ fontSize: textsize, fill: '#000' });
+    cursors = this.input.keyboard.createCursorKeys();
+   
+}
+
+
+//********************************************
+// 更新：主程式
+//************************************
+function update (){
+    if (cursors.space.isDown){
+        //initial();
+        music2.stop();
+        this.scene.restart();
+    }
+
+    // 遊戲結束
+    if (gameOver){
+        timetext.setText('Game Over');
+        return;
+    }
+
+    // 判斷餐點(mybutton)的狀態, 是否烤熟 or 烤焦
+    for (var i=0 ; i< mybutton.length; i++){
+        if (mybutton[i].cooktime< 0 && mybutton[i].favor.ani != ""){
+            mybutton[i].setBecome();
+        } else {      
+            mybutton[i].cooktime -=1;
+        }
+    }
+
+    // 判斷是否顧客(user)可以關閉 , 如果兩個order都沒了就可以關閉客戶
+    for (var i=0; i< user.length;i++){
+        var user1 = user[i];
+        if( user1.order.active== false && user1.order2.active == false){
+            user1.customer.disableBody(true,true);
+        }
+    }
+
+    // 自動產生客戶
+    if(frametime % 250 == 0 ){
+        for (var i=0; i< user.length;i++){
+            var user1 = user[i];
+            if( user1.customer.active == false  ){
+                adduser(user1);
+                break;
+            }
+        }
+    }
+
+
+    timetext.setText('time:'+frametime);
+    frametime += 1;
+
+}
+
+// ************************************
+
+
+
+function toCustomer(aa1){
+    var me = mybutton[aa1];
+    orders.children.iterate(function (child) {
+        if (child.texture.key == me.raw.name  && child.active){
+            me.setFrom1();
+            child.disableBody(true, true); 
+            score += 100;
+            scoreText.setText("Score: " + score);
+            //console.log(child);
+        }
+    });  
+}
+
+
+function toTable(aa1,pk){
+    var me =  mybutton[aa1];
+    for (var i=0; i<pk.length;i++){
+        var bb1 = pk[i];
+        var you = mybutton[bb1];
+        if (me.raw.mate1 == you.raw.type){
+            you.setTo(me.raw.to1);
+            me.setFrom1();
+            //console.log(you);
+            break;
+
+        }else if(me.raw.mate2 == you.raw.type) {
+            you.setTo(me.raw.to2);
+            me.setFrom1();
+            break;
+        }
+    }
+}
+
+function adduser(userX){
+    var id = Math.floor(Phaser.Math.FloatBetween(11, 18));
+    userX.order.setTexture('food'+id);
+    userX.order.enableBody(true, userX.order.x, userX.order.y, true, true);
+
+    var id = Math.floor(Phaser.Math.FloatBetween(11, 18));
+    userX.order2.setTexture('food'+id);
+    userX.order2.enableBody(true, userX.order2.x, userX.order2.y, true, true);
+
+    userX.customer.enableBody(true, userX.customer.x, userX.customer.y, true, true);
+}
+
+
+
+
+function food(name,time,mate1,from1,to1,ani,mate2,from2,to2,isClick,become,type){
+    this.name = name;
+    this.time = time;
+    this.mate1 = mate1;
+    this.from1 = from1;
+    this.to1 = to1 ;
+    this.ani = ani ;
+    this.mate2 = mate2;
+    this.from2 = from2;
+    this.to2 = to2;
+    this.isClick = isClick;
+    this.become = become;
+    this.type = type;
+}
+
+function plate(type,cooktime){
+    this.type = type;
+    this.cooktime = cooktime;
+}
+
+function newbutton(favor,raw1){
+    this.favor = favor;
+    this.raw  = raw1;
+    this.cooktime = 0;
+    this.setFrom1 = function(){
+        this.raw = raw[this.raw.from1];
+        this.favor.setTexture(this.raw.name);
+        this.cooktime = this.raw.time;
+    }
+
+    this.setTo = function(youmat){
+        this.raw = raw[youmat];
+        this.favor.setTexture(this.raw.name);
+        this.cooktime = this.raw.time;
+    }
+
+    this.setBecome= function(){
+        this.raw = raw[this.raw.become];
+        this.favor.setTexture(this.raw.name);  
+        this.cooktime = this.raw.time;
+    
+    }
+}
+
+function newuser(cus1,order1,order2){
+    this.customer = cus1;
+    this.order = order1;
+    this.order2 = order2;
+}
+
+
+
+
+</script>
+
+</body>
+</html>
